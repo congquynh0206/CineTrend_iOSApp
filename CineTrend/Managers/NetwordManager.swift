@@ -21,18 +21,13 @@ class NetworkManager {
     
     // Hàm lấy phim Trending
     func getTrendingMovies() async throws -> [Movie] {
-        
-        // Ghép thành 1 link từ constant
         let endpoint = "\(Constants.baseURL)/trending/movie/day?api_key=\(Constants.apiKey)"
         
         guard let url = URL(string: endpoint) else {
             throw NetworkError.invalidURL
         }
-        
-        // Gửi lệnh lên mạng
         let (data, response) = try await URLSession.shared.data(from: url)
         
-        // Check xem Server có trả lời OK không (200 là OK)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw NetworkError.invalidResponse
         }
@@ -47,6 +42,46 @@ class NetworkManager {
             throw NetworkError.invalidData
         }
     }
+    
+    
+    // Ham lay phim dang chieu
+    func getNowPlayingMovies () async throws -> [Movie]{
+        let endpoint = "\(Constants.baseURL)/movie/now_playing?api_key=\(Constants.apiKey)"
+        
+        guard let url = URL(string: endpoint) else {
+            throw NetworkError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else{
+            throw NetworkError.invalidResponse
+        }
+        do {
+            let decoder = JSONDecoder()
+            let result = try decoder.decode(MovieResponse.self, from: data)
+            return result.results
+        }catch {
+            throw NetworkError.invalidData
+        }
+    }
+    
+    
+    // Hàm lấy phim Sắp chiếu 
+        func getUpcomingMovies() async throws -> [Movie] {
+            let endpoint = "\(Constants.baseURL)/movie/upcoming?api_key=\(Constants.apiKey)"
+            guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
+            
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                throw NetworkError.invalidResponse
+            }
+            
+            let result = try JSONDecoder().decode(MovieResponse.self, from: data)
+            return result.results
+        }
+    
+    
     
     // Hàm lấy danh sách trailer của phim
     func getMovieVideos(movieId: Int) async throws -> [Video] {
@@ -73,4 +108,29 @@ class NetworkManager {
         }
         
     }
+    
+    // Lấy danh sách diễn viên
+    func getMovieCredits(movieId: Int) async throws -> [Cast] {
+        let endpoint = "\(Constants.baseURL)/movie/\(movieId)/credits?api_key=\(Constants.apiKey)"
+        
+        guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw NetworkError.invalidResponse
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let result = try decoder.decode(CreditsResponse.self, from: data)
+            return result.cast
+        } catch {
+            print("Lỗi decode cast: \(error)")
+            throw NetworkError.invalidData
+        }
+    }
+    
+    
+    
 }

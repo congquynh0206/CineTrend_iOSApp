@@ -9,6 +9,7 @@ import UIKit
 class DetailViewController : UIViewController {
     var movie: Movie?
     private var trailerKey: String?
+    private var castList: [Cast] = []
     
     // Scroll view
     private let scrollView : UIScrollView = {
@@ -57,6 +58,15 @@ class DetailViewController : UIViewController {
         title.translatesAutoresizingMaskIntoConstraints = false
         return title
     }()
+   
+    // Rating
+    private let ratingLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.textColor = .systemYellow
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
     //Sub title
     private let subTitleLabel : UILabel = {
@@ -78,13 +88,43 @@ class DetailViewController : UIViewController {
         return summary
     }()
     
+    
+    private let castTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "The Cast"
+        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.textColor = .secondaryLabel
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    // Danh sách diễn viên
+    private let castCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.itemSize = CGSize(width: 80, height: 110)
+        layout.minimumLineSpacing = 10
+        
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .clear
+        cv.showsHorizontalScrollIndicator = false
+        cv.translatesAutoresizingMaskIntoConstraints = false
+        return cv
+    }()
+    
     override func viewDidLoad(){
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        
+        castCollectionView.register(CastCell.self, forCellWithReuseIdentifier: CastCell.identifier)
+        castCollectionView.dataSource = self
+        castCollectionView.delegate = self
+        
         youtubeButton.addTarget(self, action: #selector(didTapYoutubeButton), for: .touchUpInside)
         setUpUI()
         configureData()
         getTrailer()
+        getCast()
     }
     
     // Hàm xử lý khi bấm nút
@@ -104,8 +144,11 @@ class DetailViewController : UIViewController {
         contentView.addSubview(backImage)
         contentView.addSubview(youtubeButton)
         contentView.addSubview(titleLable)
+        contentView.addSubview(ratingLabel)
         contentView.addSubview(subTitleLabel)
         contentView.addSubview(summary)
+        contentView.addSubview(castTitleLabel)
+        contentView.addSubview(castCollectionView)
         
         NSLayoutConstraint.activate([
             // scroll
@@ -139,8 +182,11 @@ class DetailViewController : UIViewController {
             titleLable.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             titleLable.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
+            ratingLabel.topAnchor.constraint(equalTo: titleLable.bottomAnchor, constant: 8),
+            ratingLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
             // Nội dung phụ
-            subTitleLabel.topAnchor.constraint(equalTo: titleLable.bottomAnchor, constant: 20),
+            subTitleLabel.topAnchor.constraint(equalTo: ratingLabel.bottomAnchor, constant: 20),
             subTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             subTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
@@ -149,7 +195,15 @@ class DetailViewController : UIViewController {
             summary.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             summary.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            summary.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            castTitleLabel.topAnchor.constraint(equalTo: summary.bottomAnchor, constant: 24),
+            castTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            castCollectionView.topAnchor.constraint(equalTo: castTitleLabel.bottomAnchor, constant: 10),
+            castCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            castCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            castCollectionView.heightAnchor.constraint(equalToConstant: 120),
+            
+            castCollectionView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
     
@@ -159,6 +213,9 @@ class DetailViewController : UIViewController {
         
         titleLable.text = movie.title ?? movie.originalTitle
         summary.text = movie.overview
+        
+        let ratingValue = String(format: "%.1f", movie.voteAverage)
+        ratingLabel.text = "★ \(ratingValue) / 10 "
         
         let path = movie.backDropPath ??  movie.posterPath ?? ""
         let url = Constants.imageBaseURL + path
@@ -192,4 +249,36 @@ class DetailViewController : UIViewController {
         }
     }
     
+    // Lấy danh sách dvien
+    private func getCast() {
+        guard let movie = movie else { return }
+        Task {
+            do {
+                let cast = try await NetworkManager.shared.getMovieCredits(movieId: movie.id)
+                // Lấy tối đa 10 diễn viên
+                self.castList = Array(cast.prefix(10))
+                DispatchQueue.main.async {
+                    self.castCollectionView.reloadData()
+                }
+            } catch {
+                print("Lỗi lấy diễn viên: \(error)")
+            }
+        }
+    }
+    
+}
+
+
+extension DetailViewController: UICollectionViewDataSource, UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return castList.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CastCell.identifier, for: indexPath) as? CastCell else {
+            return UICollectionViewCell()
+        }
+        cell.configure(with: castList[indexPath.row])
+        return cell
+    }
 }
