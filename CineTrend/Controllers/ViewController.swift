@@ -27,6 +27,9 @@ class ViewController: UIViewController {
 
     private var collectionView: UICollectionView!
     private var searchTimer: Timer?
+    
+    private var bannerTimer : Timer?
+    private var currentBannerIndex = 0
 
     var trendingMovies: [Movie] = []
     var nowPlayingMovies: [Movie] = []
@@ -54,6 +57,19 @@ class ViewController: UIViewController {
         configureCollectionView()
         fetchData()
         setupSearchController()
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        // Dừng timer khi màn hình bị ẩn
+        stopBannerAutoScroll()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Chạy lại timer khi màn hình hiện lên
+        if !trendingMovies.isEmpty {
+            startBannerAutoScroll()
+        }
     }
     
     // Search
@@ -115,7 +131,7 @@ class ViewController: UIViewController {
         // Item
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
         
         // Group
         //let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(600))
@@ -139,20 +155,42 @@ class ViewController: UIViewController {
         section.boundarySupplementaryItems = [header, footer]
         
         section.visibleItemsInvalidationHandler = { [weak self] (visibleItems, offset, env) in
-            // offset.x là toạ độ x hiện tại
-            // env.container.contentSize.width là chiều rộng vùng hiển thị
-            let bannerWidth = env.container.contentSize.width
-            let page = Int(round(offset.x / bannerWidth))           // 300/300 = trang 1
+            guard let self = self else { return }
             
-            // Tìm cái Footer để cập nhật
-            if let footerItem = visibleItems.first(where: { $0.representedElementKind == UICollectionView.elementKindSectionFooter }) {
+            // Toạ độ tâm thực tế
+            let centerX = offset.x + (env.container.contentSize.width / 2)
+            
+            for item in visibleItems {
+                // Chỉ apply hiệu ứng cho Cell , bỏ qua Header/Footer
+                guard item.representedElementCategory == .cell else { continue }
                 
-                // Lấy View thực tế từ CollectionView
-                if let footerView = self?.collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionFooter, at: footerItem.indexPath) as? PagingFooterView {
-                    
-                    // Cập nhật số trang và kiểm tra xem trendingMovies có dữ liệu chưa
-                    let totalPages = self?.trendingMovies.count ?? 0
-                    footerView.configure(numberOfPages: totalPages, currentPage: page)
+                // Tính khoảng cách từ tâm item đến tâm màn hình
+                let distanceFromCenter = abs(item.frame.midX - centerX)
+                
+                // Nhỏ nhất chỉ 0.85
+                let minScale: CGFloat = 0.85
+                let containerWidth = env.container.contentSize.width
+                
+                // Càng xa tâm càng nhỏ, càng gần tâm càng to
+                let scale = max(minScale, 1 - (distanceFromCenter / containerWidth) * 0.2)
+                
+                // Áp dụng transform, biến đổi thuộc tính cell ngay lập tức
+                item.transform = CGAffineTransform(scaleX: scale, y: scale)
+                
+            }
+            // Vì groupSize width = 0.8 nên phải nhân 0.8
+            let bannerWidth = env.container.contentSize.width * 0.8
+            let page = Int(round(offset.x / bannerWidth))
+            
+            // Update biến currentBannerIndex để Timer chạy đúng
+            if page >= 0 && page < self.trendingMovies.count {
+                self.currentBannerIndex = page
+            }
+            
+            // Cập nhật footer
+            if let footerItem = visibleItems.first(where: { $0.representedElementKind == UICollectionView.elementKindSectionFooter }) {
+                if let footerView = self.collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionFooter, at: footerItem.indexPath) as? PagingFooterView {
+                    footerView.configure(numberOfPages: self.trendingMovies.count, currentPage: page)
                 }
             }
         }
@@ -209,11 +247,14 @@ class ViewController: UIViewController {
                     self.collectionView.isHidden = false
                     self.collectionView.reloadData()
                     self.collectionView.layoutIfNeeded()
+//                    self.startBannerAutoScroll()
+                    
                     
                     if !self.trendingMovies.isEmpty {
                         let midIndex = self.trendingMovies.count / 2
                         let indexPath = IndexPath(item: midIndex, section: 0)
                         self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: false)
+                        self.startBannerAutoScroll()
                     }
                 }
             } catch {
@@ -228,6 +269,36 @@ class ViewController: UIViewController {
                     self.present(alert, animated: true)
                 }
             }
+        }
+    }
+    
+    // Thời gian scroll banner
+    func startBannerAutoScroll(){
+        stopBannerAutoScroll()
+        bannerTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true){ [weak self] _ in
+            self?.scrollToNextBanner()
+        }
+    }
+    
+    // Dừng scroll
+    func stopBannerAutoScroll(){
+        bannerTimer?.invalidate()
+        bannerTimer = nil
+    }
+    
+    // Scroll đến bannẻ tiếp theo
+    func scrollToNextBanner(){
+        guard !trendingMovies.isEmpty else {return}
+        let nextIndex = currentBannerIndex + 1
+        if nextIndex < trendingMovies.count {
+            currentBannerIndex = nextIndex
+            let indexPath = IndexPath(item: currentBannerIndex, section: 0)
+            collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+            
+        }else {
+            currentBannerIndex = 0
+            let indexPath = IndexPath(item: 0, section: 0)
+            collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         }
     }
 }
