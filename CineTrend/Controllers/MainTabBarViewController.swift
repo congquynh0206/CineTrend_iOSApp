@@ -12,7 +12,7 @@ class MainTabBarViewController : UITabBarController{
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         
-        let vc1 = UINavigationController(rootViewController: ViewController())
+        let vc1 = UINavigationController(rootViewController: HomeViewController())
         let vc2 = UINavigationController(rootViewController: FavoritesViewController())
         
         vc1.tabBarItem.image = UIImage(systemName: "house")

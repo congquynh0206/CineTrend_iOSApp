@@ -23,7 +23,7 @@ enum BrowseSection: Int {
     }
 }
 
-class ViewController: UIViewController {
+class HomeViewController: UIViewController {
 
     private var collectionView: UICollectionView!
     private var searchTimer: Timer?
@@ -35,15 +35,8 @@ class ViewController: UIViewController {
     var nowPlayingMovies: [Movie] = []
     var upcomingMovies: [Movie] = []
     
-    //Loading
-    private let loadingSpinner: UIActivityIndicatorView = {
-        let spinner = UIActivityIndicatorView(style: .large)
-        spinner.color = .systemGray
-        spinner.hidesWhenStopped = true
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        return spinner
-    }()
 
+    // Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -71,6 +64,15 @@ class ViewController: UIViewController {
             startBannerAutoScroll()
         }
     }
+    
+    //Loading
+    private let loadingSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(style: .large)
+        spinner.color = .systemGray
+        spinner.hidesWhenStopped = true
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        return spinner
+    }()
     
     // Search
     func setupSearchController() {
@@ -111,7 +113,7 @@ class ViewController: UIViewController {
         view.addSubview(collectionView)
     }
     
-    // Hàm tạo layout phức tạp (Banner to + List nhỏ)
+    // Hàm tạo layout (Banner to + List nhỏ)
     func createCompositionalLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
             
@@ -154,6 +156,7 @@ class ViewController: UIViewController {
         
         section.boundarySupplementaryItems = [header, footer]
         
+        // To ở giữa, nhỏ 2 bên, hàm này cập nhật liên tục
         section.visibleItemsInvalidationHandler = { [weak self] (visibleItems, offset, env) in
             guard let self = self else { return }
             
@@ -247,9 +250,8 @@ class ViewController: UIViewController {
                     self.collectionView.isHidden = false
                     self.collectionView.reloadData()
                     self.collectionView.layoutIfNeeded()
-//                    self.startBannerAutoScroll()
                     
-                    
+                    // Scroll ra giữa khi vừa fetch
                     if !self.trendingMovies.isEmpty {
                         let midIndex = self.trendingMovies.count / 2
                         let indexPath = IndexPath(item: midIndex, section: 0)
@@ -304,7 +306,7 @@ class ViewController: UIViewController {
 }
 
 // DataSource - Delegate
-extension ViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     // Số lượng Section
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -413,7 +415,7 @@ extension ViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     }
 }
 
-extension ViewController: UISearchResultsUpdating {
+extension HomeViewController: UISearchResultsUpdating {
     
     func updateSearchResults(for searchController: UISearchController) {
         
@@ -456,7 +458,7 @@ extension ViewController: UISearchResultsUpdating {
     }
 }
 // Xử lý khi bấm vào phim ở màn Search (Delegate)
-extension ViewController: SearchResultsDelegate {
+extension HomeViewController: SearchResultsDelegate {
     func didTapItem(_ movie: Movie) {
         let detailVC = DetailViewController()
         detailVC.movie = movie
