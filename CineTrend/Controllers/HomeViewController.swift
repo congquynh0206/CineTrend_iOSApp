@@ -290,7 +290,12 @@ class HomeViewController: UIViewController {
     
     // Scroll đến bannẻ tiếp theo
     func scrollToNextBanner(){
+        // User đang kéo thì dừng hàm
+        if collectionView.isDragging || collectionView.isDecelerating {
+            return
+        }
         guard !trendingMovies.isEmpty else {return}
+        
         let nextIndex = currentBannerIndex + 1
         if nextIndex < trendingMovies.count {
             currentBannerIndex = nextIndex
@@ -371,12 +376,15 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
                 case .trending:
                     gridVC.movies = self.trendingMovies
                     gridVC.pageTitle = "Trending Now"
+                    gridVC.listType = .trending
                 case .nowPlaying:
                     gridVC.movies = self.nowPlayingMovies
                     gridVC.pageTitle = "Now Playing"
+                    gridVC.listType = .nowPlaying
                 case .upcoming:
                     gridVC.movies = self.upcomingMovies
                     gridVC.pageTitle = "Upcoming Movies"
+                    gridVC.listType = .upcoming
                 }
                 
                 // Đẩy sang màn hình mới 
@@ -440,20 +448,7 @@ extension HomeViewController: UISearchResultsUpdating {
             
             // Gọi api
             print("Đang search: \(query)")
-            
-            Task {
-                do {
-                    let movies = try await NetworkManager.shared.searchMovies(query: query)
-                    
-                    // Cập nhật UI
-                    DispatchQueue.main.async {
-                        resultsController.movies = movies
-                        resultsController.searchCollectionView.reloadData()
-                    }
-                } catch {
-                    print("Lỗi search: \(error)")
-                }
-            }
+            resultsController.performNewSearch(with: query)
         }
     }
 }

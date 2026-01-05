@@ -16,6 +16,9 @@ class SearchResultsViewController: UIViewController {
     
     public var movies: [Movie] = []
     public weak var delegate: SearchResultsDelegate?
+    public var isLoadingMore = false
+    public var currentPage = 1
+    public var searchQuery = ""
     
     public let searchCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -45,6 +48,39 @@ class SearchResultsViewController: UIViewController {
         super.viewDidLayoutSubviews()
         searchCollectionView.frame = view.bounds
     }
+    
+    public func performNewSearch(with query: String){
+        self.searchQuery = query
+        self.currentPage = 1
+        self.movies.removeAll()
+        self.isLoadingMore = false
+        self.searchCollectionView.reloadData()
+        loadMoreData()
+    }
+    
+    private func loadMoreData(){
+        guard !isLoadingMore else{return}
+        isLoadingMore = true
+        Task{
+            do{
+                var newMovies : [Movie] = []
+                newMovies = try await NetworkManager.shared.searchMovies(query: searchQuery, page: currentPage)
+                print("Load lần : \(currentPage) - tổng phim: \(movies.count)")
+                DispatchQueue.main.async {
+                    if !newMovies.isEmpty {
+                        self.currentPage += 1
+                    }
+                    
+                    self.movies.append(contentsOf: newMovies)
+                    self.isLoadingMore = false
+                    self.searchCollectionView.reloadData()
+                }
+            }catch{
+                print("Looi seach: \(error)")
+                self.isLoadingMore = false
+            }
+        }
+    }
 }
 
 extension SearchResultsViewController: UICollectionViewDelegate, UICollectionViewDataSource {
@@ -64,5 +100,16 @@ extension SearchResultsViewController: UICollectionViewDelegate, UICollectionVie
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // Khi bấm vào phim thì báo cho cho home biết để chuyển màn hình
         delegate?.didTapItem(movies[indexPath.row])
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let position = scrollView.contentOffset.y
+        let contentHeight = searchCollectionView.contentSize.height
+        let screenHeight = scrollView.frame.size.height
+        
+        if position > (contentHeight - screenHeight - 100) {
+            guard !isLoadingMore else { return }
+            loadMoreData()
+        }
     }
 }

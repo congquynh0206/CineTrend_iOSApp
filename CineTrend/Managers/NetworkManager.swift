@@ -27,8 +27,8 @@ class NetworkManager {
     }
     
     // Hàm lấy phim Trending
-    func getTrendingMovies() async throws -> [Movie] {
-        let endpoint = "\(Constants.baseURL)/trending/movie/day?api_key=\(Constants.apiKey)"
+    func getTrendingMovies(page : Int = 1) async throws -> [Movie] {
+        let endpoint = "\(Constants.baseURL)/trending/movie/day?api_key=\(Constants.apiKey)&page=\(page)"
         
         guard let url = URL(string: endpoint) else {
             throw NetworkError.invalidURL
@@ -73,8 +73,8 @@ class NetworkManager {
     
     
     // Ham lay phim dang chieu
-    func getNowPlayingMovies () async throws -> [Movie]{
-        let endpoint = "\(Constants.baseURL)/movie/now_playing?api_key=\(Constants.apiKey)"
+    func getNowPlayingMovies (page : Int = 1) async throws -> [Movie]{
+        let endpoint = "\(Constants.baseURL)/movie/now_playing?api_key=\(Constants.apiKey)&page=\(page)"
         
         guard let url = URL(string: endpoint) else {
             throw NetworkError.invalidURL
@@ -95,19 +95,19 @@ class NetworkManager {
     }
     
     
-    // Hàm lấy phim Sắp chiếu 
-        func getUpcomingMovies() async throws -> [Movie] {
-            let endpoint = "\(Constants.baseURL)/movie/upcoming?api_key=\(Constants.apiKey)"
-            guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
-            
-            let (data, response) = try await session.data(from: url)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                throw NetworkError.invalidResponse
-            }
-            
-            let result = try JSONDecoder().decode(MovieResponse.self, from: data)
-            return result.results
+    // Hàm lấy phim Sắp chiếu
+    func getUpcomingMovies(page : Int = 1) async throws -> [Movie] {
+        let endpoint = "\(Constants.baseURL)/movie/upcoming?api_key=\(Constants.apiKey)&page=\(page)"
+        guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
+        
+        let (data, response) = try await session.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw NetworkError.invalidResponse
         }
+        
+        let result = try JSONDecoder().decode(MovieResponse.self, from: data)
+        return result.results
+    }
     
     
     
@@ -201,13 +201,13 @@ class NetworkManager {
     
     
     // Search
-    func searchMovies(query: String) async throws -> [Movie] {
+    func searchMovies(query: String, page : Int = 1) async throws -> [Movie] {
         // "Iron Man" -> "Iron%20Man"
         guard let queryEncoded = query.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
             throw NetworkError.invalidURL
         }
         
-        let endpoint = "\(Constants.baseURL)/search/movie?api_key=\(Constants.apiKey)&query=\(queryEncoded)"
+        let endpoint = "\(Constants.baseURL)/search/movie?api_key=\(Constants.apiKey)&query=\(queryEncoded)&page=\(page)"
         
         guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
         

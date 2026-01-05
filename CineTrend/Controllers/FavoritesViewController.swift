@@ -13,7 +13,7 @@ class FavoritesViewController : UIViewController{
     private let collectionView : UICollectionView = {
         let cv = UICollectionViewFlowLayout()
         let itemWidth = (UIScreen.main.bounds.width) / 3 - 10
-        cv.itemSize = CGSize(width: itemWidth, height: 180)
+        cv.itemSize = CGSize(width: itemWidth, height: itemWidth * 2)
         cv.minimumLineSpacing = 10
         cv.minimumInteritemSpacing = 5
         cv.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
