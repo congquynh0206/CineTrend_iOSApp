@@ -10,6 +10,7 @@ class DetailViewController : UIViewController {
     var movie: Movie?
     private var trailerKey: String?
     private var castList: [Cast] = []
+    private var similarMovies : [Movie] = []
     
     // Scroll view
     private let scrollView : UIScrollView = {
@@ -113,6 +114,31 @@ class DetailViewController : UIViewController {
         return cv
     }()
     
+    private let similarTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Similar Movies"
+        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.textColor = .secondaryLabel
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    // Danh sách diễn viên
+    private let similarCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.itemSize = CGSize(width: 140, height: 220)
+        layout.minimumLineSpacing = 16
+        
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .clear
+        cv.showsHorizontalScrollIndicator = false
+        cv.translatesAutoresizingMaskIntoConstraints = false
+        return cv
+    }()
+    
+    
+    
     override func viewDidLoad(){
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -121,11 +147,18 @@ class DetailViewController : UIViewController {
         castCollectionView.dataSource = self
         castCollectionView.delegate = self
         
+        
+        let nib = UINib(nibName: "MovieCellCollectionViewCell", bundle: nil)
+        similarCollectionView.register(nib, forCellWithReuseIdentifier: "MovieCellId")
+        similarCollectionView.dataSource = self
+        similarCollectionView.delegate = self
+        
         youtubeButton.addTarget(self, action: #selector(didTapYoutubeButton), for: .touchUpInside)
         setUpUI()
         configureData()
         getTrailer()
         getCast()
+        getSimilarMovie()
         setupNavigationBar()
     }
     
@@ -151,6 +184,8 @@ class DetailViewController : UIViewController {
         contentView.addSubview(summary)
         contentView.addSubview(castTitleLabel)
         contentView.addSubview(castCollectionView)
+        contentView.addSubview(similarTitleLabel)
+        contentView.addSubview(similarCollectionView)
         
         NSLayoutConstraint.activate([
             // scroll
@@ -197,15 +232,23 @@ class DetailViewController : UIViewController {
             summary.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             summary.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            castTitleLabel.topAnchor.constraint(equalTo: summary.bottomAnchor, constant: 24),
+            castTitleLabel.topAnchor.constraint(equalTo: summary.bottomAnchor, constant: 16),
             castTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             
             castCollectionView.topAnchor.constraint(equalTo: castTitleLabel.bottomAnchor, constant: 10),
-            castCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            castCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            castCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
+            castCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             castCollectionView.heightAnchor.constraint(equalToConstant: 120),
             
-            castCollectionView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            similarTitleLabel.topAnchor.constraint(equalTo: castCollectionView.bottomAnchor, constant: 24),
+            similarTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            similarCollectionView.topAnchor.constraint(equalTo: similarTitleLabel.bottomAnchor, constant: 10),
+            similarCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
+            similarCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -16),
+            similarCollectionView.heightAnchor.constraint(equalToConstant: 220),
+            
+            similarCollectionView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
     
@@ -328,20 +371,59 @@ class DetailViewController : UIViewController {
         }
     }
     
+    // Lấy dsach phim liên quan
+    private func getSimilarMovie(){
+        guard let movie = movie else {return}
+        Task{
+            do{
+                let similar = try await NetworkManager.shared.getSimilarMoives(movieId: movie.id)
+                self.similarMovies = Array(similar)
+                DispatchQueue.main.async {
+                    self.similarCollectionView.reloadData()
+                }
+            }catch{
+                print("Loi lay similar: \(error)")
+            }
+        }
+    }
+    
 }
 
 
 extension DetailViewController: UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return castList.count
+        if collectionView == castCollectionView{
+            return castList.count
+        }else{
+            return similarMovies.count
+        }
+        
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CastCell.identifier, for: indexPath) as? CastCell else {
-            return UICollectionViewCell()
+        if collectionView == castCollectionView {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CastCell.identifier, for: indexPath) as? CastCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(with: castList[indexPath.row])
+            return cell
+        }else {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieCellId", for: indexPath) as? MovieCellCollectionViewCell else{
+                return UICollectionViewCell()
+            }
+            cell.configure(with: similarMovies[indexPath.row], isBig: false)
+            return cell
         }
-        cell.configure(with: castList[indexPath.row])
-        return cell
+    }
+    
+    // Xử lý khi bấm vào phim
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if collectionView == similarCollectionView{
+            let selectedMovie: Movie = similarMovies[indexPath.row]
+            let detailVC = DetailViewController()
+            detailVC.movie = selectedMovie
+            navigationController?.pushViewController(detailVC, animated: true)
+        }
     }
 }
 

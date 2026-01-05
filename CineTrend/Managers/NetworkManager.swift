@@ -50,6 +50,27 @@ class NetworkManager {
         }
     }
     
+    //Hàm lấy phim tương tự
+    func getSimilarMoives(movieId : Int) async throws -> [Movie]{
+        let endpoint = "\(Constants.baseURL)/movie/\(movieId)/similar?api_key=\(Constants.apiKey)"
+        
+        guard let url = URL(string: endpoint) else{
+            throw NetworkError.invalidURL
+        }
+        let (data,response) = try await session.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else{
+            throw NetworkError.invalidResponse
+        }
+        do{
+            let result = try JSONDecoder().decode(MovieResponse.self, from: data)
+            return result.results
+        }catch{
+            print ("Loi lay phim lien quan")
+            throw NetworkError.invalidData
+        }
+    }
+    
     
     // Ham lay phim dang chieu
     func getNowPlayingMovies () async throws -> [Movie]{

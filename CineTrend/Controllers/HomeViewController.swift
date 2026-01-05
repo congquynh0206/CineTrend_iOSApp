@@ -156,7 +156,7 @@ class HomeViewController: UIViewController {
         
         section.boundarySupplementaryItems = [header, footer]
         
-        // To ở giữa, nhỏ 2 bên, hàm này cập nhật liên tục
+        // To ở giữa, nhỏ 2 bên, hàm cập nhật liên tục
         section.visibleItemsInvalidationHandler = { [weak self] (visibleItems, offset, env) in
             guard let self = self else { return }
             
