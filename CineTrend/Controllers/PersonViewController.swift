@@ -233,7 +233,7 @@ class PersonViewController : UIViewController{
             profileCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             profileCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            // Avatar - nằm trong card
+            // Avatar
             avatarImageView.topAnchor.constraint(equalTo: profileCard.topAnchor, constant: 20),
             avatarImageView.leadingAnchor.constraint(equalTo: profileCard.leadingAnchor, constant: 20),
             avatarImageView.widthAnchor.constraint(equalToConstant: 110),
@@ -288,18 +288,18 @@ class PersonViewController : UIViewController{
     private func fetchData() {
         Task {
             do {
-                // Gọi song song 2 API Info & Movies
+                // Gọi song song 2 API Info, Movies
                 async let personDetail : Person = NetworkManager.shared.request(.personDetail(id: personId))
                 async let personMovies : PersonMovieCreditsResponse = NetworkManager.shared.request(.personMovieCredits(id: personId))
                 
                 let (person, moviesResponse) = try await (personDetail, personMovies)
-                self.movies = moviesResponse.cast.filter{$0.posterPath != nil}
+                self.movies = moviesResponse.cast.filter{$0.posterPath != nil}.sorted { ($0.popularity ?? 0) > ($1.popularity ?? 0) }
                 
                 DispatchQueue.main.async {
                     self.updateUI(with: person)
                     self.moviesCollectionView.reloadData()
                     
-                    // Lấy ảnh của phim nổi tiếng nhất làm ảnh nền Header
+                    // Lấy ảnh của phim nổi tiếng nhất làm background img
                     if let bestMovie = self.movies.first, let backdrop = bestMovie.backDropPath {
                         let url = Constants.imageBaseURL + backdrop
                         self.headerImageView.downloadImage(from: url)
@@ -312,6 +312,7 @@ class PersonViewController : UIViewController{
     }
     
 
+    // update ui
     private func updateUI(with person: Person) {
         nameLabel.text = person.name
         jobLabel.text = person.knownForDepartment
@@ -321,6 +322,7 @@ class PersonViewController : UIViewController{
             avatarImageView.downloadImage(from: Constants.imageBaseURL + path)
         }
     }
+    
 }
 
 // Datasource, delegate
@@ -337,7 +339,7 @@ extension PersonViewController: UICollectionViewDelegate, UICollectionViewDataSo
         return cell
     }
     
-    // Bấm vào phim thì lại mở màn hình Detail phim
+    // Bấm vào phim thì mở màn hình Detail
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let detailVC = DetailViewController()
         detailVC.movie = movies[indexPath.row]

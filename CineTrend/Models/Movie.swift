@@ -6,7 +6,7 @@
 //
 import Foundation
 
-// Đại diện object api trả về
+
 struct MovieResponse: Codable {
     let results: [Movie]
 }
@@ -44,8 +44,8 @@ struct Video: Codable {
     let id: String
     let key: String    // Dùng để ghép thành link YouTube
     let name: String
-    let site: String   // "YouTube"
-    let type: String   // "Trailer", "Teaser"
+    let site: String
+    let type: String
 }
 
 

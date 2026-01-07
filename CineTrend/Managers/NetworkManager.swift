@@ -85,7 +85,7 @@ class NetworkManager {
             throw NetworkError.invalidURL
         }
         
-        // Gọi mạng
+        // Gọi API
         let (data, response) = try await session.data(from: url)
         
         // Check Status Code
@@ -97,7 +97,7 @@ class NetworkManager {
         // Decode
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .useDefaultKeys // Hoặc .convertFromSnakeCase nếu cần
+            decoder.keyDecodingStrategy = .useDefaultKeys
             
             let result = try decoder.decode(T.self, from: data)
             return result

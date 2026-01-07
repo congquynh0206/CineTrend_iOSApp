@@ -35,7 +35,7 @@ class PagingFooterView: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // Hàm nhận số lượng trang và trang hiện tại
+    // Nhận số lượng trang và trang hiện tại
     func configure(numberOfPages: Int, currentPage: Int) {
         pageControl.numberOfPages = numberOfPages
         pageControl.currentPage = currentPage

@@ -16,12 +16,10 @@ enum MovieListType {
 }
 
 class MovieGridViewController: UIViewController {
-
-    // Dữ liệu phim
     var movies: [Movie] = []
     var pageTitle: String = ""
+    var listType: MovieListType = .none     // khởi tạo ban đầu
     
-    var listType: MovieListType = .none     // Loại dsach hiện tại
     private var currentPage = 1
     private var isLoadingMore = false
     
@@ -110,7 +108,6 @@ extension MovieGridViewController: UICollectionViewDelegate, UICollectionViewDat
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Khi bấm vào phim trong list View All thì chuyển sang Detail
         let detailVC = DetailViewController()
         detailVC.movie = movies[indexPath.row]
         navigationController?.pushViewController(detailVC, animated: true)
@@ -124,7 +121,7 @@ extension MovieGridViewController: UICollectionViewDelegate, UICollectionViewDat
         // Nội dung ngắn quá thì không cần check
         guard contentHeight > screenHeight else { return }
         
-        // Khi lướt đến cách đáy 100pt thì gọi hàm tải thêm
+        // Cách đáy 100pt thì gọi api tải thêm
         if position > (contentHeight - screenHeight - 100) {
             loadMoreData()
         }

@@ -27,7 +27,7 @@ class DataPersistenceManager {
         item.vote_average = model.voteAverage
         
         do {
-            try context.save() // Lưu lại
+            try context.save()
             completion(.success(()))
         } catch {
             completion(.failure(error))
@@ -66,7 +66,7 @@ class DataPersistenceManager {
         
         do {
             let count = try context.count(for: request)
-            return count > 0 // Nếu đếm > 0 tức là đã có
+            return count > 0 // Nếu đếm > 0 = có
         } catch {
             return false
         }

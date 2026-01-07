@@ -41,6 +41,7 @@ class FavoritesViewController : UIViewController{
         }
     }
     
+    
     override func viewWillAppear (_ animated : Bool) {
         super.viewWillAppear(animated)
         fetchLocalStorageForDownload()
@@ -50,6 +51,8 @@ class FavoritesViewController : UIViewController{
         super.viewDidLayoutSubviews()
         collectionView.frame = view.bounds
     }
+    
+    
     
     // Load du lieu tu db
     private func fetchLocalStorageForDownload(){

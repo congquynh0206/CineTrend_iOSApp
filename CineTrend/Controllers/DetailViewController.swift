@@ -1,8 +1,9 @@
 //
 //  DetailViewController.swift
-//  CineTrend - Modern Design
+//  CineTrend
 //
-
+//  Created by Trangptt on 2/1/26.
+//
 import UIKit
 
 class DetailViewController : UIViewController {
@@ -213,7 +214,7 @@ class DetailViewController : UIViewController {
         super.viewDidLayoutSubviews()
         gradientLayer.frame = backImage.bounds
         
-        // Update gradient for youtube button
+        // Gradient cho YTB button
         if let gradientLayer = youtubeButton.layer.sublayers?.first as? CAGradientLayer {
             gradientLayer.frame = youtubeButton.bounds
         }
@@ -310,6 +311,7 @@ class DetailViewController : UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
+            //Background img
             backImage.topAnchor.constraint(equalTo: contentView.topAnchor),
             backImage.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             backImage.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
@@ -329,7 +331,7 @@ class DetailViewController : UIViewController {
             ratingLabel.heightAnchor.constraint(equalToConstant: 36),
             ratingLabel.widthAnchor.constraint(equalTo: youtubeButton.widthAnchor),
             
-            
+            // YTB button
             youtubeButton.topAnchor.constraint(equalTo: ratingLabel.bottomAnchor, constant: 10),
             youtubeButton.leadingAnchor.constraint(equalTo: infoCard.leadingAnchor, constant: 20),
             youtubeButton.trailingAnchor.constraint(equalTo: infoCard.trailingAnchor, constant: -20),
@@ -340,6 +342,7 @@ class DetailViewController : UIViewController {
             subTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             subTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
+            // Overview
             summary.topAnchor.constraint(equalTo: subTitleLabel.bottomAnchor, constant: 12),
             summary.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             summary.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
@@ -358,6 +361,7 @@ class DetailViewController : UIViewController {
             viewAllButton.centerYAnchor.constraint(equalTo: similarTitleLabel.centerYAnchor),
             viewAllButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
+            // Similar movie
             similarCollectionView.topAnchor.constraint(equalTo: similarTitleLabel.bottomAnchor, constant: 12),
             similarCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
             similarCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor,constant: -16),
@@ -378,7 +382,7 @@ class DetailViewController : UIViewController {
         backImage.downloadImage(from: url)
     }
     
-    // Fetch video và YTB button
+    // Fetch video, YTB button
     private func getTrailer() {
         guard let movie = movie else { return }
         

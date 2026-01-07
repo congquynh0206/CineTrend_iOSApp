@@ -113,7 +113,7 @@ class HomeViewController: UIViewController {
         view.addSubview(collectionView)
     }
     
-    // Hàm tạo layout (Banner to + List nhỏ)
+    // Hàm tạo layout Banner to + List nhỏ
     func createCompositionalLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
             
@@ -136,7 +136,6 @@ class HomeViewController: UIViewController {
         item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
         
         // Group
-        //let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(600))
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(480))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
@@ -170,18 +169,18 @@ class HomeViewController: UIViewController {
                 // Tính khoảng cách từ tâm item đến tâm màn hình
                 let distanceFromCenter = abs(item.frame.midX - centerX)
                 
-                // Nhỏ nhất chỉ 0.85
+                // Nhỏ nhất 0.85
                 let minScale: CGFloat = 0.85
                 let containerWidth = env.container.contentSize.width
                 
-                // Càng xa tâm càng nhỏ, càng gần tâm càng to
+                // Xa tâm thì nhỏ, gần thì to
                 let scale = max(minScale, 1 - (distanceFromCenter / containerWidth) * 0.2)
                 
-                // Áp dụng transform, biến đổi thuộc tính cell ngay lập tức
+                // Biến đổi thuộc tính cell
                 item.transform = CGAffineTransform(scaleX: scale, y: scale)
                 
             }
-            // Vì groupSize width = 0.8 nên phải nhân 0.8
+            
             let bannerWidth = env.container.contentSize.width * 0.8
             let page = Int(round(offset.x / bannerWidth))
             

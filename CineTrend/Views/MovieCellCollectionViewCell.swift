@@ -31,9 +31,8 @@ class MovieCellCollectionViewCell: UICollectionViewCell {
     private func loadImage(from urlString: String) {
         self.currentURL = urlString
         
-        // Bắt đầu tải thì xoá ảnh cũ, loading
+        // Bắt đầu tải thì xoá ảnh cũ
         self.posterImageView.image = nil
-        //self.loadingSpinner.startAnimating()
         
         guard let url = URL(string: urlString) else {
             return
